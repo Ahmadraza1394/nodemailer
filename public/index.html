@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Sender</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-200 flex flex-col items-center p-6 min-h-screen">
+    <div class="bg-white shadow-lg rounded-lg p-6 w-full max-w-lg">
+      <h1 class="text-3xl font-bold mb-6 text-center">Send Email</h1>
+      <form id="emailForm" class="space-y-4">
+        <div>
+          <label class="block text-gray-700 text-sm font-semibold mb-1" for="to"
+            >To:</label
+          >
+          <input
+            type="email"
+            id="to"
+            required
+            class="shadow-sm border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="recipient@example.com"
+          />
+        </div>
+        <div>
+          <label
+            class="block text-gray-700 text-sm font-semibold mb-1"
+            for="subject"
+            >Subject:</label
+          >
+          <input
+            type="text"
+            id="subject"
+            required
+            class="shadow-sm border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Email Subject"
+          />
+        </div>
+        <div>
+          <label
+            class="block text-gray-700 text-sm font-semibold mb-1"
+            for="text"
+            >Message:</label
+          >
+          <textarea
+            id="text"
+            required
+            class="shadow-sm border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Type your message here..."
+            rows="4"
+          ></textarea>
+        </div>
+        <button
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200 w-full"
+        >
+          Send Email
+        </button>
+      </form>
+    </div>
+
+    <div class="bg-white shadow-lg rounded-lg p-6 mt-6 w-full">
+      <h2 class="text-xl font-semibold mb-4">Email Logs</h2>
+      <table class="min-w-full bg-white border border-gray-300">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="py-2 px-4 border-b">Sended To</th>
+            <th class="py-2 px-4 border-b">Subject</th>
+            <th class="py-2 px-4 border-b">Message</th>
+            <th class="py-2 px-4 border-b">Date</th>
+          </tr>
+        </thead>
+        <tbody id="logEntriesContainer">
+          <!-- Log entries will be populated here -->
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      document
+        .getElementById("emailForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const to = document.getElementById("to").value;
+          const subject = document.getElementById("subject").value;
+          const text = document.getElementById("text").value;
+
+          try {
+            const response = await fetch("/api/mail/send", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ to, subject, text }),
+            });
+
+            const data = await response.json();
+            alert(data.message);
+            loadEmailLogs(); // Reload logs after sending an email
+          } catch (error) {
+            alert("Error sending email: " + error.message);
+          }
+        });
+
+      // Function to load email logs
+      const loadEmailLogs = async () => {
+        try {
+          const response = await fetch("/api/mail/logs");
+          const logs = await response.json();
+          const logEntriesContainer = document.getElementById(
+            "logEntriesContainer"
+          );
+          logEntriesContainer.innerHTML = ""; // Clear existing entries
+
+          logs.forEach((log) => {
+            const logEntry = document.createElement("tr");
+            logEntry.className = "border-b hover:bg-gray-50";
+
+            logEntry.innerHTML = `
+                        <td class="py-2 px-4">${log.to}</td>
+                        <td class="py-2 px-4">${log.subject}</td>
+                        <td class="py-2 px-4">${log.text}</td>
+                        <td class="py-2 px-4">${log.date}</td>
+                    `;
+            logEntriesContainer.appendChild(logEntry);
+          });
+        } catch (error) {
+          console.error("Error loading logs:", error);
+        }
+      };
+
+      // Load email logs on page load
+      window.onload = loadEmailLogs;
+    </script>
+  </body>
+</html>
